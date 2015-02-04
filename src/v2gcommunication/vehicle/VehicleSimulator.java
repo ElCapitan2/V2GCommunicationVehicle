@@ -10,13 +10,7 @@ import java.util.*;
  * @author alexander
  */
 public class VehicleSimulator extends Thread{
-    private final String vehicleName;
-    private final Double cxValue;
-    private final Double rollingCoefficient;
-    private final Double mass;
-    private Double speed = 0.0;
-    private Double distance = 0.0;
-    private Double torque = 0.0;
+    private final Date startDate;
     
     private final static Double[][] speedProfile = {{ (double) 0, (double) 0}, 
             { (double) 1, (double) 0}, 
@@ -1819,65 +1813,36 @@ public class VehicleSimulator extends Thread{
             { (double) 1798, (double) 0}, 
             { (double) 1799, (double) 0}, 
             { (double) 1800, (double) 0}};
-
+    
+    private static VehicleSimulator instance = null;
     
     
-    VehicleSimulator(String vehicleName, Double cxValue, Double rollingCoefficient, Double mass){
-        super(vehicleName);
-        this.vehicleName=vehicleName; 
-        this.cxValue=cxValue;
-        this.rollingCoefficient = rollingCoefficient;
-        this.mass=mass;
+    private VehicleSimulator(){
+        Date date = new Date();
+        this.startDate = date; 
     }
     
-    @Override public void run(){
-        Date date1 = new Date();
-        try{
-            Thread.sleep(100);
+    public static synchronized VehicleSimulator getInstance(){
+        if (instance == null){
+            instance = new VehicleSimulator();
         }
-        catch (Exception e) {
-            System.out.println("Thread was already interupted");
-        }
-        Date date2 = new Date();
-        Long time = (long) 0;
-        while (true){
-            Long dt = date2.getTime()- date1.getTime();
-            time = time + dt;
-            int i = 0;
-            int a = 0;
-            Double dTime = (double) time /1000.0;
-            if (dTime >= 1800){
-                dTime = dTime - 1800;
-            }
-            
-            while (dTime > speedProfile[i][0] ){
-                a=i;
-                i++;
-            }
-            Double speedOld = speed;
-            speed = (speedProfile[a+1][1] - speedProfile[a][1])/(speedProfile[a+1][0] - speedProfile[a][0])*(dTime-speedProfile[a][0]) + speedProfile[a][1];
-            distance = distance + speed * dt/1000/3600;
-            torque = (speed-speedOld)/dt*1000*3600*mass;
-            date1.setTime(date2.getTime());
-            try{
-                Thread.sleep(100);
-            }
-            catch (Exception e) {
-                System.out.println("Thread was already interupted");
-            }
-            date2 = new Date();
-            
-        }
-            
-           
+        return instance;
     }
+    
     public Double getSpeed(){
+        Date date = new Date();
+        double speed = 0;
+        long diffMil = date.getTime() - this.startDate.getTime();
+        double diffSec = diffMil/1000;
+        for (int i = 0; i<speedProfile.length; i++){
+            if (diffSec >= speedProfile[i][0]){
+                speed = speedProfile[i][1];
+            }
+            if (diffSec < speedProfile[i][0]){
+                break;
+            }
+        }
         return speed;
     }
-    public Double getDistance(){
-        return distance;
-    }
-    public Double getTorque(){
-        return torque;
-    }
+   
 }
